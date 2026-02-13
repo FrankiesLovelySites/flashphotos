@@ -1,43 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Frankie's Photo Station</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background: #FFD700; }
-        .box { background: white; padding: 30px; border-radius: 20px; display: inline-block; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-        button { background: #000; color: #fff; padding: 15px 25px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 90%; }
+        h1 { color: #333; margin-bottom: 0.5rem; }
+        p { color: #666; margin-bottom: 1.5rem; }
+        input[type="file"] { margin-bottom: 1.5rem; width: 100%; }
+        button { background: #6772e5; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: background 0.2s; }
+        button:hover { background: #5469d4; }
+        #status { margin-top: 1rem; font-size: 0.9rem; color: #d93025; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h1>📸 Instant Mini Print</h1>
-        <p>Upload a photo for a retro 2x3 print!</p>
-        <input type="file" id="upload" accept="image/*"><br><br>
-        <button onclick="uploadAndPay()">Pay $2.00 & Print</button>
-    </div>
 
-    <script>
-        const _url = "YOUR_SUPABASE_URL";
-        const _key = "YOUR_SUPABASE_ANON_KEY";
-        const supabase = supabase.createClient(_url, _key);
+<div class="card">
+    <h1>📸 Mini Print</h1>
+    <p>Upload a photo and pay $2.00 to print it instantly on my Kodak Mini 2!</p>
+    
+    <input type="file" id="photoInput" accept="image/*">
+    <button id="payButton">Pay & Print</button>
+    <div id="status"></div>
+</div>
 
-        async function uploadAndPay() {
-            const file = document.getElementById('upload').files[0];
-            if (!file) return alert("Select a photo!");
+<script>
+    // YOUR KEYS
+    const SB_URL = "https://z32gcai7zm-ohv1yuw53zg.supabase.co"; // Derived from your pub key
+    const SB_KEY = "sb_publishable_z32GCai7ZM-OHv1YUW53zg_f7DKIHcV";
+    
+    const supabase = supabase.createClient(SB_URL, SB_KEY);
 
-            const fileName = `${Date.now()}_${file.name}`;
-            const { data, error } = await supabase.storage
-                .from('photos')
-                .upload(fileName, file);
+    document.getElementById('payButton').addEventListener('click', async () => {
+        const fileInput = document.getElementById('photoInput');
+        const status = document.getElementById('status');
+        const file = fileInput.files[0];
 
-            if (error) {
-                alert("Upload failed!");
-            } else {
-                // Redirect to Stripe after successful upload
-                window.location.href = "https://buy.stripe.com/your_link";
-            }
+        if (!file) {
+            status.innerText = "Please select a photo first!";
+            return;
         }
-    </script>
+
+        status.style.color = "blue";
+        status.innerText = "Uploading...";
+
+        // 1. Upload to Supabase Storage (Bucket name must be 'photos')
+        const fileName = `${Date.now()}-${file.name}`;
+        const { data, error } = await supabase.storage
+            .from('photos')
+            .upload(fileName, file);
+
+        if (error) {
+            status.style.color = "red";
+            status.innerText = "Upload failed: " + error.message;
+            console.error(error);
+        } else {
+            status.style.color = "green";
+            status.innerText = "Success! Redirecting to payment...";
+            
+            // 2. Redirect to your Stripe Payment Link
+            // Replace this URL with your actual Stripe Payment Link from your dashboard
+            setTimeout(() => {
+                window.location.href = "https://buy.stripe.com/test_your_link_here";
+            }, 1000);
+        }
+    });
+</script>
+
 </body>
 </html>
